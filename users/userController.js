@@ -5,6 +5,10 @@ const User = require('./user');
 
 const sgMail = require('../sgmail');
 
+var AWS = require('aws-sdk')
+const fs = require('fs')
+
+
 
 router.use(bodyParser.json());
 
@@ -33,6 +37,48 @@ router.post("/create", (req, res) => {
         }
     });
 });
+
+router.post('/test', (req, res) => {
+    console.log(req);
+    res.status(200).send({"msg":"working"})
+});
+
+
+router.get('/aws', (req, res) => {
+    const BUCKET = 'jr-payment-screenshots'
+    const REGION = 'eu-west-1'
+    const ACCESS_KEY = 'AKIAVDUI74KBNQBGHX5B'
+    const SECRET_KEY = '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'
+    
+    const localImage = 'jrnewlogo.jpeg'
+    const imageRemoteName = `catImage_${new Date().getTime()}.png`
+    
+    AWS.config.update({
+      accessKeyId: ACCESS_KEY,
+      secretAccessKey: SECRET_KEY,
+      region: REGION
+    })
+    
+    var s3 = new AWS.S3()
+    
+    s3.putObject({
+      Bucket: BUCKET,
+      Body: fs.readFileSync(localImage),
+      Key: imageRemoteName
+    })
+      .promise()
+      .then(response => {
+        console.log(`done! - `, response)
+        console.log(
+          `The URL is ${s3.getSignedUrl('getObject', { Bucket: BUCKET, Key: imageRemoteName })}`
+        )
+      })
+      .catch(err => {
+        console.log('failed:', err)
+      })
+})
+
+
 
 
 module.exports = router;
